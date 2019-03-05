@@ -48,6 +48,57 @@ app.get('/api/genres/:id', function(request, response) {
 			}
 			
 		});
+});
+
+// Return array of artists that can be filtered
+app.get('/api/artists', function(request, response) {
+
+	// Request has access to the query string 'filter'
+	let filter = request.query.filter;	
+	console.log(filter);
+
+	let connection = knex({
+		client: 'sqlite3',
+		connection: {
+			filename: 'chinook.db'
+		}
+	});
+
+	if (filter) {
+
+		connection
+		.select()
+		.from('artists')
+		.where('Name', 'like', `%${filter}%`)
+		.then( (artists) => {
+			if (artists) {
+				let arr = artists.map ( (artist) => {
+					let obj = {};
+					obj.id = artist.ArtistId;
+					obj.name = artist.Name;
+					return obj;
+				});
+				response.json(arr);
+			} else {
+				response.status(404).json({
+					error: `Artist name ${filter} not found`
+				});
+			}
+		});
+
+	} else {
+
+		connection.select().from('artists').then( (artists) => {
+			let arr = artists.map( (artist) => {
+				let obj = {};
+				obj.id = artist.ArtistId;
+				obj.name = artist.Name;
+				return obj;
+			});
+			response.json(arr);
+		});
+
+	}
 
 });
 
